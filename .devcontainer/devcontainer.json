@@ -1,0 +1,64 @@
+{
+  "name": "DSH Sandbox",
+  // "image": "lesca/dsh-sandbox:latest",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      // "HTTPS_PROXY": "http://172.17.0.1:7070",
+      "TZ": "Asia/Shanghai"
+    }
+  },
+  "features": {
+    // "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "runArgs": [
+    "--add-host=host.docker.internal:host-gateway",
+    // "--env=HTTPS_PROXY=http://host.docker.internal:7070",
+    // "--env=HTTP_PROXY=http://host.docker.internal:7070",
+    // "--env=NO_PROXY=127.0.0.1,localhost,192.168.0.0/16",
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  "init": true,
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // "anthropic.claude-code"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          }
+        },
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true
+      }
+    }
+  },
+  "remoteUser": "node",
+  "mounts": [
+    "source=${localEnv:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,readonly",
+    "source=${localWorkspaceFolder}/.dsh,target=/home/node/.dsh,type=bind"
+  ],
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  "remoteEnv": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN:}",
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY:}"
+  },
+  "initializeCommand": "test -f \"$HOME/.gitconfig\" || touch \"$HOME/.gitconfig\"",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated,bind-propagation=rslave",
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "bash /opt/post-install.sh"
+}
