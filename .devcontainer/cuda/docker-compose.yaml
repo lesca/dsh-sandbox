@@ -1,5 +1,5 @@
 services:
-  dsh-cuda:
+  dsh-sandbox:
     build:
       context: ..
       dockerfile: cuda/Dockerfile

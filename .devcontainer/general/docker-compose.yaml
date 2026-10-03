@@ -1,5 +1,5 @@
 services:
-  dsh-general:
+  dsh-sandbox:
     build:
       context: ..
       dockerfile: general/Dockerfile

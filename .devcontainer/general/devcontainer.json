@@ -2,7 +2,7 @@
   "name": "DSH Sandbox - General",
   // "image": "lesca/dsh-sandbox:latest",
   "dockerComposeFile": ["docker-compose.yaml"],
-  "service": "dsh-general",
+  "service": "dsh-sandbox",
   "shutdownAction": "stopCompose",
   "features": {
     // "ghcr.io/devcontainers/features/github-cli:1": {}

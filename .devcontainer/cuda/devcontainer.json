@@ -2,7 +2,7 @@
   "name": "DSH Sandbox - CUDA",
   // "image": "lesca/dsh-sandbox:latest",
   "dockerComposeFile": ["docker-compose.yaml"],
-  "service": "dsh-cuda",
+  "service": "dsh-sandbox",
   "shutdownAction": "stopCompose",
   "features": {
     // "ghcr.io/devcontainers/features/github-cli:1": {}
