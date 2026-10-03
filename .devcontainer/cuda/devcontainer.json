@@ -1,0 +1,47 @@
+{
+  "name": "DSH Sandbox - CUDA",
+  // "image": "lesca/dsh-sandbox:latest",
+  "dockerComposeFile": ["docker-compose.yaml"],
+  "service": "dsh-cuda",
+  "shutdownAction": "stopCompose",
+  "features": {
+    // "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "init": true,
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // "anthropic.claude-code"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          }
+        },
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true
+      }
+    }
+  },
+  "remoteUser": "ubuntu",
+  "containerEnv": {
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1",
+    "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"
+  },
+  "remoteEnv": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN:}",
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY:}"
+  },
+  "initializeCommand": "mkdir -p $HOME/.dsh",
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "bash /opt/post-install.sh"
+}
