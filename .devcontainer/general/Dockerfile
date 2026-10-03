@@ -7,13 +7,15 @@ ENV TZ="$TZ"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG TARGETARCH
-# 如果是 arm64，SOURCE_FILE 为 ubuntu-ports.sources，否则为 ubuntu.sources
-ARG SOURCE_FILE=${TARGETARCH:+${TARGETARCH#arm64}ubuntu-ports.sources}
-# 兼容未启用 BuildKit 或 TARGETARCH 为空的情况
-ARG SOURCE_FILE=${SOURCE_FILE:-ubuntu.sources}
+# 如果 TARGETARCH 是 arm64，则值为 ubuntu-ports.sources，否则（amd64、386 等）统一为 ubuntu.sources
+ARG SOURCE_FILE=${TARGETARCH#arm64}
+# 如果上面的结果为空（说明确实是 arm64，被 #arm64 裁剪掉了），则赋值为 ubuntu-ports.sources；否则加上后缀 .sources
+ARG SOURCE_FILE=${SOURCE_FILE:+ubuntu.sources}
+ARG SOURCE_FILE=${SOURCE_FILE:-ubuntu-ports.sources}
 RUN echo "Current target architecture is: $TARGETARCH, using source file: $SOURCE_FILE"
 
 # Install additional system packages (base image already includes git, curl, sudo, etc.)
+COPY sudoer_default /etc/sudoers.d/sudoer_default
 COPY ${SOURCE_FILE} /etc/apt/sources.list.d/ubuntu.sources
 RUN apt-get -o Acquire::https::Verify-Peer=false update \
   && apt -o Acquire::https::Verify-Peer=false install -y ca-certificates \
@@ -42,6 +44,7 @@ RUN apt-get -o Acquire::https::Verify-Peer=false update \
   curl \
   wget \
   dnsutils \
+  openssh-client \
   ipset \
   iptables \
   iproute2 \

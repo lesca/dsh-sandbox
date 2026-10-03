@@ -8,6 +8,7 @@ ENV TZ="$TZ"
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install additional system packages (base image already includes git, curl, sudo, etc.)
+COPY sudoer_default /etc/sudoers.d/sudoer_default
 COPY ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources
 RUN apt-get -o Acquire::https::Verify-Peer=false update \
   && apt -o Acquire::https::Verify-Peer=false install -y ca-certificates \
@@ -33,10 +34,10 @@ RUN apt-get -o Acquire::https::Verify-Peer=false update \
   vim \
   git \
   # Network tools (for security testing)
-  ca-certificates \
   curl \
   wget \
   dnsutils \
+  openssh-client \
   ipset \
   iptables \
   iproute2 \

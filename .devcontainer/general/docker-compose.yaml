@@ -5,7 +5,7 @@ services:
       dockerfile: general/Dockerfile
       args:
         - TZ=Asia/Shanghai
-        # - HTTPS_PROXY=http://172.17.0.1:7070
+        - HTTPS_PROXY=http://172.17.0.1:7070
         - USERNAME=ubuntu
     command: sleep infinity
     volumes:
@@ -15,7 +15,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     env_file:
-      # - ../proxy.env
+      - ../proxy.env
       - ../dsh.env
     environment:
       - TZ=Asia/Shanghai
