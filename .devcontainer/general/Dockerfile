@@ -6,9 +6,15 @@ ARG TZ
 ENV TZ="$TZ"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG TARGETARCH
+# 如果是 arm64，SOURCE_FILE 为 ubuntu-ports.sources，否则为 ubuntu.sources
+ARG SOURCE_FILE=${TARGETARCH:+${TARGETARCH#arm64}ubuntu-ports.sources}
+# 兼容未启用 BuildKit 或 TARGETARCH 为空的情况
+ARG SOURCE_FILE=${SOURCE_FILE:-ubuntu.sources}
+RUN echo "Current target architecture is: $TARGETARCH, using source file: $SOURCE_FILE"
 
 # Install additional system packages (base image already includes git, curl, sudo, etc.)
-COPY ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources
+COPY ${SOURCE_FILE} /etc/apt/sources.list.d/ubuntu.sources
 RUN apt-get -o Acquire::https::Verify-Peer=false update \
   && apt -o Acquire::https::Verify-Peer=false install -y ca-certificates \
   && apt-get install -y --no-install-recommends \
