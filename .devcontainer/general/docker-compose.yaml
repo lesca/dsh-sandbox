@@ -10,15 +10,17 @@ services:
     command: sleep infinity
     volumes:
       - ../..:/workspace:cached,slave
+      - ../../.dsh:/home/ubuntu/.dsh
       - ../post-install.sh:/opt/post-install.sh
-      - $HOME/.dsh:/home/ubuntu/.dsh
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    env_file:
+      # - ../proxy.env
+      - ../dsh.env
     environment:
       - TZ=Asia/Shanghai
-      # - HTTPS_PROXY=http://host.docker.internal:7070
-      # - HTTP_PROXY=http://host.docker.internal:7070
-      # - NO_PROXY=127.0.0.1,localhost,192.168.0.0/16
+      - DEEPSEEK_API_KEY
+      - DEEPSEEK_BASE_URL
     cap_add:
       - NET_ADMIN
       - NET_RAW

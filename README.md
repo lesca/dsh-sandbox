@@ -31,6 +31,7 @@ dsh-sandbox
 │   ├── ubuntu.sources
 │   └── .zshrc
 ├── .gitignore
+├── .dsh/                           <- DSH_HOME folder
 ├── sources                         <- put your sources here
 └── README.md
 ```
