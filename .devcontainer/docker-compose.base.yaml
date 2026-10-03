@@ -1,22 +1,21 @@
 services:
   dsh-sandbox:
     build:
-      context: ..
-      dockerfile: general/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       args:
         - TZ=Asia/Shanghai
-        - HTTPS_PROXY=http://172.17.0.1:7070
         - USERNAME=ubuntu
     command: sleep infinity
     volumes:
-      - ../..:/workspace:cached,slave
-      - ../../.dsh:/home/ubuntu/.dsh
-      - ../post-install.sh:/opt/post-install.sh
+      - ..:/workspace:cached,slave
+      - ../.dsh:/home/ubuntu/.dsh
+      - ./post-install.sh:/opt/post-install.sh
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    env_file:
-      - ../proxy.env
-      - ../dsh.env
+    # env_file:
+    #   - proxy.env
+    #   - dsh.env
     environment:
       - TZ=Asia/Shanghai
       - DEEPSEEK_API_KEY

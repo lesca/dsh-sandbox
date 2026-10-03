@@ -19,20 +19,27 @@ This project is aimed to create a sandbox environment for DSH within VS Code. It
 ```
 dsh-sandbox
 ├── .devcontainer
-│   ├── cuda                        <- works on platforms with cuda devices
+│   ├── arm64                       <- arm64 / macOS support
 │   │   ├── devcontainer.json
-│   │   ├── docker-compose.yaml
-│   │   └── Dockerfile
-│   ├── general                     <- works on all platforms, including macos
+│   │   └── docker-compose.yaml
+│   ├── x86_64                      <- x86_64 support
 │   │   ├── devcontainer.json
-│   │   ├── docker-compose.yaml
-│   │   └── Dockerfile
-│   ├── post-install.sh             <- add dsh plugins here
+│   │   └── docker-compose.yaml
+│   ├── x86_64_cuda                 <- x86_64 with cuda support
+│   │   ├── devcontainer.json
+│   │   └── docker-compose.yaml
+│   ├── docker-compose.base.yaml
+│   ├── Dockerfile
+│   ├── dsh.env
+│   ├── post-install.sh
+│   ├── proxy.env
+│   ├── sudoer_default
+│   ├── ubuntu-ports.sources
 │   ├── ubuntu.sources
 │   └── .zshrc
 ├── .gitignore
-├── .dsh/                           <- DSH_HOME folder
-├── sources                         <- put your sources here
+├── .dsh/           <- DSH_HOME
+├── sources         <- put your sources here
 └── README.md
 ```
 

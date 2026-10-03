@@ -1,12 +1,11 @@
 {
-  "name": "DSH Sandbox - General",
-  // "image": "lesca/dsh-sandbox:latest",
-  "dockerComposeFile": ["docker-compose.yaml"],
+  "name": "DSH Sandbox - arm64 (macOS)",
+  "dockerComposeFile": [
+    "../docker-compose.base.yaml",
+    "docker-compose.yaml"
+  ],
   "service": "dsh-sandbox",
   "shutdownAction": "stopCompose",
-  "features": {
-    // "ghcr.io/devcontainers/features/github-cli:1": {}
-  },
   "init": true,
   "updateRemoteUserUID": true,
   "customizations": {
