@@ -1,9 +1,9 @@
-.dsh/*
-models/*
-huggingface/*
-sources/*
+.dsh/
+models/
+huggingface/
+sources/
 .DS_Store
 ._*
 .venv*
 .vscode
-zz-notes/*
+zz-notes/
