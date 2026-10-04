@@ -1,10 +1,6 @@
 # link sources to home
 ln -sfn /workspace/sources $HOME
 
-# set HF_HOME
-# sudo mount --bind $HOME/.cache/huggingface dsh-sandbox/huggingface
-export HF_HOME=/workspace/huggingface
-
 # install dsh plugins
 # opencode fix: https://github.com/deepseek-ai/deepseek-harness/discussions/5495
 dsh plugin --profile web add dsh-opencode-session

@@ -29,3 +29,7 @@ alias grep='grep --color=auto'
 
 # dsh npm
 export PATH=~/.npm-global/bin:$PATH
+
+# set HF_HOME
+# sudo mount --bind $HOME/.cache/huggingface dsh-sandbox/huggingface
+export HF_HOME=/workspace/huggingface
