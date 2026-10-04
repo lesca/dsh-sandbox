@@ -1,7 +1,6 @@
 {
   "name": "DSH Sandbox - arm64 (macOS)",
   "dockerComposeFile": [
-    "../docker-compose.base.yaml",
     "docker-compose.yaml"
   ],
   "service": "dsh-sandbox",

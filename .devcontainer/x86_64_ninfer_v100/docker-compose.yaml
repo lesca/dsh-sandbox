@@ -5,12 +5,24 @@ services:
       service: dsh-sandbox
     build:
       args:
-        - BASE_IMAGE=nvidia/cuda:12.9.2-cudnn-devel-ubuntu24.04
+        - BASE_IMAGE=ubuntu:24.04
         - SOURCE_FILE=ubuntu.sources
         - HTTPS_PROXY=http://172.17.0.1:7070
     env_file:
       - ../proxy.env
       - ../dsh.env
+
+  ninfer-v100:
+    container_name: ninfer-v100
+    image: lesca/ninfer-v100-sm70:latest
+    stop_signal: SIGINT
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - /share/public/models/ninfer:/models
+    ports:
+      - "18080:18080"
+    # command: sleep infinity
     # 启用特权模式或 GPU 支持（如果你的 Dockerfile 需要 NVIDIA CUDA 支持）
     deploy:
       resources:

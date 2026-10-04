@@ -1,7 +1,7 @@
 services:
   dsh-sandbox:
     extends:
-      file: docker-compose.base.yaml
+      file: ../docker-compose.base.yaml
       service: dsh-sandbox
     build:
       args:
@@ -10,4 +10,4 @@ services:
         # - HTTPS_PROXY=http://172.17.0.1:7070
     env_file:
       # - proxy.env
-      - dsh.env
+      - ../dsh.env

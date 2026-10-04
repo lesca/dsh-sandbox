@@ -7,7 +7,7 @@ services:
         - TZ=Asia/Shanghai
         - USERNAME=ubuntu
     command: sleep infinity
-    user: "${UID}:${GID}"
+    user: "${UID:-1000}:${GID:-1001}"
     volumes:
       - ..:/workspace:cached,slave
       - ../.dsh:/home/ubuntu/.dsh
