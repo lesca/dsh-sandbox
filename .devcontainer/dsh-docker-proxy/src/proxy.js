@@ -89,10 +89,17 @@ const DECODABLE_ENCODINGS = new Set(['', 'identity', 'gzip', 'deflate']);
  *   targetPort: number,
  *   getToken: () => string | undefined,
  *   log?: (message: string) => void,
+ *   logDebug?: (message: string) => void,
  * }} opts
  * @returns {{server: import('node:http').Server, agent: import('node:http').Agent}}
  */
-function createProxyServer({ targetHost, targetPort, getToken, log = () => {} }) {
+function createProxyServer({
+  targetHost,
+  targetPort,
+  getToken,
+  log = () => {},
+  logDebug = () => {},
+}) {
   const authority = `${targetHost}:${targetPort}`;
   const targetOrigin = `http://${authority}`;
   const agent = new http.Agent({ keepAlive: true });
@@ -135,6 +142,14 @@ function createProxyServer({ targetHost, targetPort, getToken, log = () => {} })
       return;
     }
 
+    // Set when the client side goes away (tab close, page refresh, mid-stream
+    // abort). We then destroy the upstream exchange ourselves; Node surfaces
+    // that self-inflicted teardown as an ECONNRESET on the upstream request /
+    // response. Treating those as upstream failures would flood the log with
+    // "upstream ... error ... ECONNRESET" on every page refresh, so once the
+    // client is gone we keep such teardowns quiet (see the two handlers below).
+    let clientGone = false;
+
     const upstream = http.request(
       {
         host: targetHost,
@@ -173,6 +188,11 @@ function createProxyServer({ targetHost, targetPort, getToken, log = () => {} })
           headers[name] = value;
         }
         upstreamRes.on('error', (err) => {
+          // Client already left? This error is our own upstream.destroy()
+          // tearing the exchange down (e.g. a page refresh aborting the long-
+          // lived /plugins/events SSE channel) — expected cleanup, not an
+          // upstream failure.
+          if (clientGone) return;
           log(`upstream response error for ${req.method} ${req.url}: ${err.code || err.message}`);
           try { res.destroy(); } catch { /* already gone */ }
         });
@@ -253,17 +273,26 @@ function createProxyServer({ targetHost, targetPort, getToken, log = () => {} })
           announced = true;
           res.writeHead(status, upstreamRes.statusMessage, headers);
           res.end(out);
-          log(
-            injectedBefore
-              ? 'index document: transport declaration re-injected'
-              : 'index document: injected __DSH_TRANSPORT__ (ownsHost: true); settings persistence and locale preference are now host-backed',
-          );
+          if (injectedBefore) {
+            // Routine on every subsequent full page load; visible in debug
+            // mode only, so an ordinary refresh produces no log output.
+            logDebug('index document: transport declaration re-injected');
+          } else {
+            log('index document: injected __DSH_TRANSPORT__ (ownsHost: true); settings persistence and locale preference are now host-backed');
+          }
           injectedBefore = true;
         });
       },
     );
 
     upstream.on('error', (err) => {
+      // Client left before the response even started: we destroyed the
+      // upstream request ourselves; staying quiet, and there is no client
+      // left to send a 502 to.
+      if (clientGone) {
+        try { res.destroy(); } catch { /* already gone */ }
+        return;
+      }
       log(`upstream error for ${req.method} ${req.url}: ${err.code || err.message}`);
       if (!res.headersSent) {
         res.writeHead(502, { 'content-type': 'text/plain; charset=utf-8' });
@@ -273,11 +302,17 @@ function createProxyServer({ targetHost, targetPort, getToken, log = () => {} })
       }
     });
 
-    // If the client goes away (mid-upload, mid-download, closed tab), tear the
-    // upstream exchange down too. After a fully finished response this is a
-    // no-op because writableFinished is already true.
+    // If the client goes away (mid-upload, mid-download, closed tab, page
+    // refresh), tear the upstream exchange down too. Marking clientGone first
+    // keeps the resulting upstream teardown from being logged as a failure.
+    // After a fully finished response this is a no-op because writableFinished
+    // is already true.
     res.on('close', () => {
-      if (!res.writableFinished) upstream.destroy();
+      clientGone = true;
+      if (!res.writableFinished) {
+        logDebug(`client left before completion: ${req.method} ${req.url}; dropping upstream exchange`);
+        upstream.destroy();
+      }
     });
 
     req.pipe(upstream);

@@ -35,6 +35,16 @@ function log(message) {
   else process.stdout.write(line + '\n');
 }
 
+/**
+ * Routine per-request events (client-side teardowns, routine re-injections).
+ * Emitted only in debug mode (DSH_PROXY_DEBUG=1, on stderr), so an ordinary
+ * page refresh produces no log output at all.
+ */
+function logDebug(message) {
+  if (!process.env.DSH_PROXY_DEBUG) return;
+  process.stderr.write(`[dsh-docker-proxy] ${message}\n`);
+}
+
 function main() {
   let opts;
   try {
@@ -151,6 +161,7 @@ function main() {
       targetPort: opts.dshPort,
       getToken,
       log,
+      logDebug,
     });
     proxyServer = server;
     proxyAgent = agent;

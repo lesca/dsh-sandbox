@@ -62,7 +62,7 @@ node src/index.js --no-spawn --token q3PatifZhyju...
 # 换端口，dsh 用完整路径启动
 node src/index.js --listen 8080 --dsh-port 3100 --dsh-cmd /home/ubuntu/.npm-global/bin/dsh
 
-# 调试模式（日志走 stderr）
+# 调试模式（日志改走 stderr，并额外输出例行事件：客户端断开清理、每次刷新的例行重新注入等）
 DSH_PROXY_DEBUG=1 node src/index.js
 ```
 
@@ -149,7 +149,11 @@ dsh 若再次公告 token（如重启），以最新值为准。
 **透明转发。** 其余响应体流式管道转发（不缓冲，SSE / 长连接无压力），
 剥离 hop-by-hop 头与 `transfer-encoding`（Node 已解 chunked），
 保留 `Set-Cookie`、`Location`、`Content-*` 等；上游 keep-alive 连接池复用。
-上游不可达时返回 502 并说明原因；客户端中途断开时同步终止上游请求。
+上游不可达时返回 502 并说明原因；客户端中途断开（关页、刷新页面）时同步
+终止上游请求——这种**客户端主动**的拆除只是预期清理，不会记为上游错误
+（否则每次刷新都会刷出一条 `upstream ... error ... ECONNRESET`，因为浏览器
+刷新时会掐断对 `/plugins/events` SSE 通道的长连接）；真实的上游故障
+（如 dsh 崩溃）照常记日志并对未应答的请求回 502。
 
 **WebSocket。** `upgrade` 请求以改写后的头重建原始字节序列，`net.connect`
 直连 dsh，双向 pipe 直至任一端关闭（覆盖 `/api/remote.mux` 等长连接）。
@@ -170,6 +174,8 @@ dsh 若再次公告 token（如重启），以最新值为准。
 | `--no-spawn` 未给 `--token` | 代理仍转发，但未登录用户看到 dsh 的 401 页面而非自动跳转 |
 | `EADDRINUSE` | 代理日志提示端口占用，换 `--listen` |
 | 403 | 基本不会出现（Host/Origin 已改写）；若出现，检查 dsh 版本栅栏行为 |
+| 日志：刷新页面后出现 `upstream ... error ... ECONNRESET` | 旧版行为：浏览器刷新会掐断对 `/plugins/events`（SSE）的长连接，代理随之拆除上游连接，旧版把这种**客户端主动**的拆除误记为上游错误。已修复：此类拆除不再记日志（`DSH_PROXY_DEBUG=1` 下仅输出 `client left before completion: ...` 一行）；真实上游故障（dsh 崩溃等）仍会记日志并对未应答请求回 502 |
+| 日志：`index document: transport declaration re-injected` | 仅调试模式（`DSH_PROXY_DEBUG=1`）输出；每次首页加载（刷新）都会例行重新注入，属正常；首次注入 `injected __DSH_TRANSPORT__ ...` 仍输出到常规日志 |
 | 退出码 | 0 正常/信号关停；2 参数错误；1 启动失败；其余为 dsh 子进程退出码 |
 
 ## 目录结构
@@ -203,4 +209,9 @@ src/
   WebSocket 升级行为与未改写版完全一致；
   `settings/describe` / `llm/listProviders` 经代理 200，`settings/mutate`
   冲突保护验证通过（错误修订号被拒、文档零改动）——注入后设置读取、
-  写入（含语言偏好持久化）与 loopback 访问等效。
+  写入（含语言偏好持久化）与 loopback 访问等效；
+- 日志降噪（本次修复）：刷新页面（浏览器掐断 `/plugins/events` SSE）与
+  上游应答前的客户端断开，均不再产生 `upstream ... error ... ECONNRESET`
+  日志（修复前每次刷新必现）；非调试模式下"加载 + 刷新 + SSE 断开"全程
+  零日志输出；真实上游故障（模拟后端中途崩溃）仍正常记日志并对客户端
+  返回 502；登录流与首页注入行为与修复前完全一致。
