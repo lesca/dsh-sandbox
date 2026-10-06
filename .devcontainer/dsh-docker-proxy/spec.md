@@ -20,6 +20,7 @@ dsh web: opening the default browser; pass --no-open to disable
 
 * 使用 nodejs 实现dsh的代理程序，并满足上述要求
 * 如果使用Spawn，主进程结束后子进程也应该一起结束。
+* 反向不耦合：DSH 进程终止时 Node（代理）不要停止。典型场景：dsh-market 安装/删除插件后在 market 中重启 dsh 服务——dsh 会派生 detached 辅助进程并自杀，辅助进程在同一端口拉起替换 dsh；代理必须保持运行，转发不中断，并自动从 market 的 restart 日志（`<tmpdir>/dsh-market-restart-*.out.log`）抓取替换 dsh 的新 launch token，保持 token 重定向有效。
 
 ## 目录结构
 

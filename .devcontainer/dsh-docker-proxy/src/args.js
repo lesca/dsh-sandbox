@@ -32,7 +32,13 @@ Options:
 The proxy starts "dsh web --port <dsh-port> --no-open", captures the token dsh
 prints to its console, and serves the dsh UI on the LAN. Unauthenticated
 browsers are redirected to /?token=<token> so they can obtain the session
-cookie. When the proxy exits, the spawned dsh child is terminated as well.
+cookie.
+
+Lifecycle: when the proxy exits, the spawned dsh child is terminated as well.
+The reverse is not coupled: if dsh exits on its own (e.g. restarted from the
+dsh-market page, which boots the replacement on the same port), the proxy
+stays up and re-captures the replacement's launch token from the market's
+restart log.
 `;
 
 class UsageError extends Error {}

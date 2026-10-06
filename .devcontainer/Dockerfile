@@ -83,12 +83,13 @@ COPY --chown=${USERNAME}:${USERNAME} entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chown=${USERNAME}:${USERNAME} dsh-docker-proxy /opt/dsh-docker-proxy
 COPY --chown=${USERNAME}:${USERNAME} .zshrc /home/${USERNAME}/.zshrc.custom
 
-WORKDIR /workspace
-
 # Handle copied files
-RUN sudo chown -R ${USERNAME}:${USERNAME} /workspace && \
+RUN sudo mkdir /workspace && \
+  sudo chown -R ${USERNAME}:${USERNAME} /workspace && \
   sudo chmod +x /usr/local/bin/entrypoint.sh && \
   echo 'source ~/.zshrc.custom' >> /home/${USERNAME}/.zshrc
+
+WORKDIR /home/${USERNAME}
 
 EXPOSE 13080
 

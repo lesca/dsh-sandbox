@@ -159,24 +159,39 @@ dsh 若再次公告 token（如重启），以最新值为准。
 直连 dsh，双向 pipe 直至任一端关闭（覆盖 `/api/remote.mux` 等长连接）。
 
 **进程生命周期。** dsh 以 `detached: true` 派生（独立进程组），
-因为它可能再派生 web 服务子进程，杀组才能连根带走：
+因为它可能再派生 web 服务子进程，杀组才能连根带走。
+耦合是**单向**的——只有"代理退出 → 带走 dsh"，没有反向耦合：
 
 - 代理收到 SIGINT/SIGTERM 退出 → 对子进程组发 SIGTERM，3 秒未退出升级 SIGKILL；
-- dsh 子进程先行退出 → 代理以子进程退出码退出（信号终止为 143）；
-- 其他任何退出路径（`process 'exit'` 钩子）也会尽力终止子进程组。
+- 其他任何退出路径（`process 'exit'` 钩子）也会尽力终止子进程组；
+- **dsh 子进程先行退出 → 代理继续运行**，监听与转发不中断。
+  典型场景是 dsh-market 页面的"重启服务"：正在运行的 dsh 会派生一个
+  **detached 辅助进程**并给自己发 SIGTERM，辅助进程等端口释放后在
+  **同一端口**启动替换 dsh。代理不随 dsh 退出而停止，重启空窗期（约 1~10 秒）
+  的请求返回 502，替换 dsh 绑定端口后自动恢复；
+- 由于 launch token 是**每进程**生成的（dsh 每次启动都是新 token，旧 token
+  在重启后失效；而浏览器会话 cookie 的签名密钥是持久化的，已登录浏览器
+  重启后不受影响），重启后**新**浏览器只能靠 token 重定向进门。替换 dsh
+  的公告行不会出现在代理的 stdout 里（它不是代理的子进程），而是写在
+  market 辅助进程的日志 `<tmpdir>/dsh-market-restart-<时间戳>.out.log`；
+  代理在子进程退出后自动 tail 该文件（`src/replacement.js`），抓到新 token
+  后立即更新重定向，后续每次 market 重启同样自动跟进；
+- 替换 dsh 由 market 辅助进程管理、不是代理的子进程，因此代理此后退出
+  （如 Ctrl-C）**不会**连带杀掉它——它会继续运行（日志中有明确提示）。
 
 ## 行为细节与排障
 
 | 现象 | 说明 |
 | --- | --- |
 | dsh 尚未就绪时的请求 | 代理返回 502 `cannot reach dsh on 127.0.0.1:<port>`，dsh 就绪后自动恢复，无需重启代理 |
+| dsh-market 重启服务 | 代理不退出：日志出现 `dsh child exited ... the proxy stays up`，空窗期请求 502，替换 dsh 起来后自动恢复；随后日志出现 `captured replacement dsh launch token ...` 表示新 token 已就位，token 重定向继续有效 |
 | 15 秒后仍无 token | 日志提示 warning（dsh 启动异常时可见） |
 | `--no-spawn` 未给 `--token` | 代理仍转发，但未登录用户看到 dsh 的 401 页面而非自动跳转 |
 | `EADDRINUSE` | 代理日志提示端口占用，换 `--listen` |
 | 403 | 基本不会出现（Host/Origin 已改写）；若出现，检查 dsh 版本栅栏行为 |
 | 日志：刷新页面后出现 `upstream ... error ... ECONNRESET` | 旧版行为：浏览器刷新会掐断对 `/plugins/events`（SSE）的长连接，代理随之拆除上游连接，旧版把这种**客户端主动**的拆除误记为上游错误。已修复：此类拆除不再记日志（`DSH_PROXY_DEBUG=1` 下仅输出 `client left before completion: ...` 一行）；真实上游故障（dsh 崩溃等）仍会记日志并对未应答请求回 502 |
 | 日志：`index document: transport declaration re-injected` | 仅调试模式（`DSH_PROXY_DEBUG=1`）输出；每次首页加载（刷新）都会例行重新注入，属正常；首次注入 `injected __DSH_TRANSPORT__ ...` 仍输出到常规日志 |
-| 退出码 | 0 正常/信号关停；2 参数错误；1 启动失败；其余为 dsh 子进程退出码 |
+| 退出码 | 0 正常/信号关停；2 参数错误；1 启动失败（dsh 无法启动、监听端口被占等） |
 
 ## 目录结构
 
@@ -184,11 +199,12 @@ dsh 若再次公告 token（如重启），以最新值为准。
 
 ```
 src/
-├── package.json   # 零依赖，bin: index.js
-├── index.js       # 入口：参数解析、派生 dsh、token 抓取、生命周期
-├── args.js        # 命令行解析（--flag / --flag=value，UsageError 退出码 2）
-├── token.js       # dsh 控制台 token 行解析（TokenLineParser，按行缓冲）
-└── proxy.js       # 代理服务器：Host/Origin 改写、401 重定向、首页 __DSH_TRANSPORT__ 注入、WS 转发
+├── package.json     # 零依赖，bin: index.js
+├── index.js         # 入口：参数解析、派生 dsh、token 抓取、生命周期
+├── args.js          # 命令行解析（--flag / --flag=value，UsageError 退出码 2）
+├── token.js         # dsh 控制台 token 行解析（TokenLineParser，按行缓冲）
+├── replacement.js   # dsh-market 重启后从辅助进程日志 tail 替换 dsh 的新 token
+└── proxy.js         # 代理服务器：Host/Origin 改写、401 重定向、首页 __DSH_TRANSPORT__ 注入、WS 转发
 ```
 
 ## 已验证（dsh 0.2.0-rc.2 / Node 24）
@@ -199,8 +215,16 @@ src/
   WebSocket 升级（101 + 握手后 mux 数据透传）全部通过；
   对照组：同一请求直连 dsh 返回 403，证明改写是放行的必要条件；
 - `--no-spawn --token` 手动 token 路径全流程通过；
-- 生命周期双向：SIGTERM 关代理 → dsh 进程组约 1 秒内全部退出、端口释放；
-  dsh 先退出 → 代理以相同退出码退出，无孤儿进程；
+- 生命周期单向耦合：SIGTERM 关代理 → 其派生的 dsh 进程组约 1 秒内全部
+  退出、端口释放、无孤儿进程；
+- dsh 先行退出不带走代理（本次修复）：dsh-market "重启服务"（POST
+  `/dsh-market/api/v1/restart`）后 dsh 子进程退出，代理保持监听，替换 dsh
+  在同一端口就绪后转发自动恢复；代理自动 tail
+  `<tmpdir>/dsh-market-restart-*.out.log` 抓到替换 dsh 的新 token
+  （日志 `captured replacement dsh launch token ...`），重定向即刻改用
+  新 token，全新浏览器登录流（302 → 303+Set-Cookie → 200）与注入均正常；
+  连续两次 market 重启、以及 SIGKILL 掉 dsh 后手动同端口拉起，代理全程
+  存活且 token 始终跟随最新一次 market 重启；
 - 边界：后端不可达 502、非法参数/同端口退出码 2、`--help`；
 - 首页改写：identity 与 gzip 请求均得到注入 `__DSH_TRANSPORT__` 的文档
   （gzip 请求以 identity 重发、`content-length` 正确、`/index.html` 同效），

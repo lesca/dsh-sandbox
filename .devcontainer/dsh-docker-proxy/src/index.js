@@ -16,15 +16,20 @@
  *      a redirect to /?token=<token> so the browser can obtain its session
  *      cookie — no console access needed.
  *
- * Lifecycle: when this process exits (SIGINT/SIGTERM or child death), the
- * spawned dsh child is terminated; when the child dies on its own, this
- * process exits with it.
+ * Lifecycle: when this process exits (SIGINT/SIGTERM or uncaught death), the
+ * spawned dsh child is terminated. The reverse is deliberately NOT coupled:
+ * if the dsh child exits on its own — most importantly the dsh-market
+ * "restart service" flow, which SIGTERMs this dsh and boots the replacement
+ * on the same port from a detached helper — the proxy stays up, keeps
+ * listening, and re-captures the replacement's launch token from the
+ * market's restart log (see replacement.js).
  */
 
 const { spawn } = require('node:child_process');
 const { parseArgs, UsageError, HELP } = require('./args');
 const { TokenLineParser } = require('./token');
 const { createProxyServer } = require('./proxy');
+const { watchReplacementToken } = require('./replacement');
 
 const KILL_GRACE_MS = 3000;   // SIGTERM -> SIGKILL escalation for the child
 const SHUTDOWN_DEADLINE_MS = 2000; // hard exit deadline for the proxy itself
@@ -72,6 +77,10 @@ function main() {
   let proxyAgent = null;
   let shuttingDown = false;
   let killAnnounced = false;
+  let stopReplacementWatch = null;
+  // True once the spawned child died on its own (e.g. a dsh-market restart
+  // replaced it with a process this proxy does not own).
+  let dshReplaced = false;
 
   /**
    * Terminate the spawned dsh tree. `dsh` is a launcher that boots the web
@@ -98,6 +107,10 @@ function main() {
     if (shuttingDown) return;
     shuttingDown = true;
     if (reason) log(reason);
+    if (stopReplacementWatch) stopReplacementWatch();
+    if (dshReplaced) {
+      log(`note: dsh is no longer our child (it was restarted out from under us); the replacement on ${dshAuthority} keeps running`);
+    }
     killChild();
 
     const deadline = setTimeout(() => process.exit(code), SHUTDOWN_DEADLINE_MS);
@@ -148,9 +161,30 @@ function main() {
       log(`failed to start dsh (${err.code || err.message}); is "${opts.dshCmd}" installed and on PATH?`);
       shutdown(1);
     });
+    /**
+     * The child exiting on its own does NOT take the proxy down. The
+     * canonical case is a dsh-market "restart service": the dsh process
+     * detaches a helper and SIGTERMs itself; the helper boots the
+     * replacement on the SAME port, so the proxy keeps listening and
+     * forwarding — requests during the brief gap get 502 and resume once
+     * the replacement binds. The replacement is not our child, so its fresh
+     * launch token arrives through the market's restart log instead of our
+     * stdout pipe: watchReplacementToken() picks it up and keeps the token
+     * redirect valid for new browsers (see replacement.js).
+     */
     child.on('exit', (code, signal) => {
-      log(`dsh child exited (code=${code} signal=${signal}); stopping proxy`);
-      shutdown(signal ? 143 : code === null ? 1 : code);
+      child = null; // dead child: nothing left to signal from this side
+      dshReplaced = true;
+      log(`dsh child exited (code=${code} signal=${signal}); the proxy stays up and keeps forwarding to ${dshAuthority}`);
+      log(`if this was a dsh-market restart, the replacement's new launch token is picked up from its restart log automatically`);
+      stopReplacementWatch = watchReplacementToken({
+        startedAt: Date.now(),
+        log,
+        logDebug,
+        onToken: (captured) => {
+          token = captured;
+        },
+      });
     });
   }
 
@@ -192,10 +226,13 @@ function main() {
   // Best-effort: any other exit path still takes the child with it.
   process.on('exit', killChild);
 
-  // Surface a hint if dsh stays silent about the token for a while.
+  // Surface a hint if dsh stays silent about the token for a while. The
+  // child reference is captured: the variable is nulled when the child
+  // exits, and this timer may fire after that.
   if (child) {
+    const spawned = child;
     const grace = setTimeout(() => {
-      if (child.exitCode === null && child.signalCode === null && !token) {
+      if (spawned.exitCode === null && spawned.signalCode === null && !token) {
         log('warning: dsh has not announced a token yet; the token redirect activates once it does');
       }
     }, 15000);
