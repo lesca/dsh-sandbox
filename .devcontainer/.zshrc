@@ -1,6 +1,3 @@
-# Add local bin to PATH
-export PATH="$HOME/.local/bin:$PATH"
-
 # History settings
 export HISTFILE=/commandhistory/.zsh_history
 export HISTSIZE=200000
@@ -26,10 +23,3 @@ alias ll='ls -lah --color=auto'
 alias la='ls -A --color=auto'
 alias l='ls -CF --color=auto'
 alias grep='grep --color=auto'
-
-# dsh npm
-export PATH=~/.npm-global/bin:$PATH
-
-# set HF_HOME
-# sudo mount --bind $HOME/.cache/huggingface dsh-sandbox/huggingface
-export HF_HOME=/workspace/huggingface

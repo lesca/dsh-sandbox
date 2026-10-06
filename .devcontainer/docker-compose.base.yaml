@@ -6,12 +6,12 @@ services:
       args:
         - TZ=Asia/Shanghai
         - USERNAME=ubuntu
-    command: sleep infinity
     user: "${UID:-1000}:${GID:-1001}"
     volumes:
       - ..:/workspace:cached,slave
       - ../.dsh:/home/ubuntu/.dsh
-      - ./post-install.sh:/opt/post-install.sh
+      - ./dsh-plugins.sh:/opt/dsh-plugins.sh
+      # - ../projects/dsh-docker-proxy:/opt/dsh-docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # env_file:
@@ -24,6 +24,8 @@ services:
     cap_add:
       - NET_ADMIN
       - NET_RAW
+    ports:
+      - 13080:13080
     # 启用特权模式或 GPU 支持（如果你的 Dockerfile 需要 NVIDIA CUDA 支持）
     # deploy:
     #   resources:

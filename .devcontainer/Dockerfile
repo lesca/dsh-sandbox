@@ -59,16 +59,8 @@ ENV DEVCONTAINER=true
 ENV SHELL=/bin/zsh
 ENV EDITOR=vim
 ENV VISUAL=vim
-
-# 使用变量设置动态的 PATH
-ENV PATH="/home/${USERNAME}/.local/bin:$PATH"
-
-WORKDIR /workspace
-
-# 使用变量动态创建用户，并设置对应的家目录 (/home/$USERNAME)
-# RUN useradd ${USERNAME} -m -s /bin/zsh && \
-RUN  mkdir -p /workspace /opt && \
-  chown -R ${USERNAME}:${USERNAME} /workspace /opt
+ENV PATH="/home/${USERNAME}/.local/bin:/home/${USERNAME}/.npm-global/bin:$PATH:$PATH"
+ENV HF_HOME=/workspace/huggingface
 
 # 切换到非 root 用户
 USER ${USERNAME}
@@ -77,6 +69,8 @@ USER ${USERNAME}
 # renovate: datasource=github-releases depName=deluan/zsh-in-docker
 RUN sh -c "$(curl -fsSL https://github.com/deluan/zsh-in-docker/releases/latest/download/zsh-in-docker.sh)" -- \
   -p git \
+  -p https://github.com/zsh-users/zsh-autosuggestions \
+  -p https://github.com/zsh-users/zsh-completions \
   -x
 
 # Install dsh
@@ -84,8 +78,18 @@ RUN mkdir -p /home/${USERNAME}/.npm-global && \
   npm config set prefix "/home/${USERNAME}/.npm-global" && \
   npm install -g @deepseek-ai/dsh
 
-# Copy zsh configuration
+# COPY files
+COPY --chown=${USERNAME}:${USERNAME} entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=${USERNAME}:${USERNAME} dsh-docker-proxy /opt/dsh-docker-proxy
 COPY --chown=${USERNAME}:${USERNAME} .zshrc /home/${USERNAME}/.zshrc.custom
 
-# Append custom zshrc to the main one
-RUN echo 'source ~/.zshrc.custom' >> /home/${USERNAME}/.zshrc
+WORKDIR /workspace
+
+# Handle copied files
+RUN sudo chown -R ${USERNAME}:${USERNAME} /workspace && \
+  sudo chmod +x /usr/local/bin/entrypoint.sh && \
+  echo 'source ~/.zshrc.custom' >> /home/${USERNAME}/.zshrc
+
+EXPOSE 13080
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

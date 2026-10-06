@@ -1,9 +1,10 @@
 .dsh/
 models/
 huggingface/
-sources/
+sources/**/
+projects/**/
 .DS_Store
 ._*
 .venv*
 .vscode
-zz-notes/
+zz-*/

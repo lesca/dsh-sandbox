@@ -40,6 +40,5 @@
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY:}"
   },
   "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.dsh",
-  "workspaceFolder": "/workspace",
-  "postCreateCommand": "bash /opt/post-install.sh"
+  "workspaceFolder": "/workspace"
 }
