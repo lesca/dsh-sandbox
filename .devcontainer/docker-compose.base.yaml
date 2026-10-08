@@ -26,6 +26,7 @@ services:
       - NET_RAW
     ports:
       - 13080:13080
+      - 52800:52800
     # 启用特权模式或 GPU 支持（如果你的 Dockerfile 需要 NVIDIA CUDA 支持）
     # deploy:
     #   resources:

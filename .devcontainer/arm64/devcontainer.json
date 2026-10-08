@@ -39,6 +39,6 @@
     "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN:}",
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY:}"
   },
-  "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.dsh",
+  // "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.dsh",
   "workspaceFolder": "/workspace"
 }

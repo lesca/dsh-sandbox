@@ -18,6 +18,8 @@ services:
     stop_signal: SIGINT
     environment:
       - TZ=Asia/Shanghai
+      # default: xhigh, allow: low, medium, xhigh
+      - REASONING_EFFORT
     volumes:
       - /share/public/models/ninfer:/models
     ports:

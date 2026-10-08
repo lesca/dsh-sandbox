@@ -44,26 +44,46 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   ipset \
   iptables \
   iproute2 \
+  # system
+  locales \
+  fonts-noto-cjk \
+  && locale-gen en_US.UTF-8 \
   && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
-
 
 # install pnpm (dsh plugin installation requires)
 RUN npm install -g corepack && \
   corepack enable && \
   corepack prepare pnpm@latest --activate
 
+# 切换到非 root 用户
+USER ${USERNAME}
+ARG HOME=/home/${USERNAME}
+
 # Set environment variables
 ENV DEVCONTAINER=true
 ENV SHELL=/bin/zsh
 ENV EDITOR=vim
 ENV VISUAL=vim
-ENV PATH="/home/${USERNAME}/.local/bin:/home/${USERNAME}/.npm-global/bin:$PATH:$PATH"
+ENV PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH:$PATH"
 ENV HF_HOME=/workspace/huggingface
 
-# 切换到非 root 用户
-USER ${USERNAME}
+# Install dsh
+RUN mkdir -p $HOME/.npm-global && \
+  npm config set prefix "$HOME/.npm-global" && \
+  npm install -g @deepseek-ai/dsh
+
+# COPY files
+COPY --chown=${USERNAME}:${USERNAME} entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=${USERNAME}:${USERNAME} dsh-docker-proxy /opt/dsh-docker-proxy
+COPY --chown=${USERNAME}:${USERNAME} .zshrc $HOME/.zshrc.custom
+
+# Handle copied files
+RUN sudo mkdir /workspace && \
+  sudo chown -R ${USERNAME}:${USERNAME} /workspace && \
+  sudo chmod +x /usr/local/bin/entrypoint.sh && \
+  echo 'source ~/.zshrc.custom' >> $HOME/.zshrc
 
 # Install Oh My Zsh
 # renovate: datasource=github-releases depName=deluan/zsh-in-docker
@@ -71,26 +91,15 @@ RUN sh -c "$(curl -fsSL https://github.com/deluan/zsh-in-docker/releases/latest/
   -p git \
   -p https://github.com/zsh-users/zsh-autosuggestions \
   -p https://github.com/zsh-users/zsh-completions \
-  -x
+  -x && \
+  $HOME/.oh-my-zsh/custom/themes/powerlevel10k/gitstatus/install -f
 
-# Install dsh
-RUN mkdir -p /home/${USERNAME}/.npm-global && \
-  npm config set prefix "/home/${USERNAME}/.npm-global" && \
-  npm install -g @deepseek-ai/dsh
+# install bsk (52800) - https://github.com/Tencent/BrowserSkill
+RUN curl -fsSL https://raw.githubusercontent.com/Tencent/BrowserSkill/main/install.sh | sh
 
-# COPY files
-COPY --chown=${USERNAME}:${USERNAME} entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY --chown=${USERNAME}:${USERNAME} dsh-docker-proxy /opt/dsh-docker-proxy
-COPY --chown=${USERNAME}:${USERNAME} .zshrc /home/${USERNAME}/.zshrc.custom
-
-# Handle copied files
-RUN sudo mkdir /workspace && \
-  sudo chown -R ${USERNAME}:${USERNAME} /workspace && \
-  sudo chmod +x /usr/local/bin/entrypoint.sh && \
-  echo 'source ~/.zshrc.custom' >> /home/${USERNAME}/.zshrc
-
-WORKDIR /home/${USERNAME}
+WORKDIR $HOME
 
 EXPOSE 13080
+EXPOSE 52800
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

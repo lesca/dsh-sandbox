@@ -31,3 +31,13 @@ dsh plugin --profile web add @tt-a1i/archify-dsh
 # dsh-xiaomi-tts (with notify features)
 # https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts
 dsh plugin --profile web add dsh-xiaomi-tts@latest
+
+# install bsk (52800)
+# https://github.com/Tencent/BrowserSkill
+# curl -fsSL https://raw.githubusercontent.com/Tencent/BrowserSkill/main/install.sh | sh
+# bsk is pre-installed; use vscode port forward is recommended
+dsh plugin --profile web add @wxg-prc-cpg/browser-skill-dsh-plugin
+
+# dsh-thinking-levels
+# https://github.com/drscrewdriver/dsh-thinking-levels
+dsh plugin --profile web add github:drscrewdriver/dsh-thinking-levels
