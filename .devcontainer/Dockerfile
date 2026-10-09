@@ -67,7 +67,6 @@ ENV SHELL=/bin/zsh
 ENV EDITOR=vim
 ENV VISUAL=vim
 ENV PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH:$PATH"
-ENV HF_HOME=/workspace/huggingface
 
 # Install dsh
 RUN mkdir -p $HOME/.npm-global && \

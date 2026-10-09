@@ -8,9 +8,14 @@ services:
         - BASE_IMAGE=ubuntu:24.04
         - SOURCE_FILE=ubuntu.sources
         - HTTPS_PROXY=http://172.17.0.1:7070
+    volumes:
+      - /share/public/models:/models
+    environment:
+      - HF_HOME=/models/huggingface
+      - MODELSCOPE_CACHE=/models/modelscope
+      - MS_CACHE_HOME=/models/modelscope
     env_file:
-      - ../proxy.env
-      - ../dsh.env
+      - ../dsh-proxy.env
 
   ninfer-v100:
     container_name: ninfer-v100
@@ -18,10 +23,14 @@ services:
     stop_signal: SIGINT
     environment:
       - TZ=Asia/Shanghai
+      # - MODEL=/models/ninfer/qwen3_8_27b_nvfp4.ninfer
+      - MODEL=/models/ninfer/qwen3_8_27b_merkyor_coder390_nvfp4.ninfer
+      # - MAX_CONCURRENCY=2
       - NINFER_ARGS=--no-thinking
       # - NINFER_ARGS=--default-reasoning-effort xhigh
     volumes:
-      - /share/public/models/ninfer:/models
+      - /share/public/models:/models:ro
+    # command: /usr/sbin/sshd -D
     ports:
       - "18080:18080"
     # command: sleep infinity

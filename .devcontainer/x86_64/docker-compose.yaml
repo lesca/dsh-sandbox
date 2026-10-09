@@ -9,5 +9,4 @@ services:
         - SOURCE_FILE=ubuntu.sources
         - HTTPS_PROXY=http://172.17.0.1:7070
     env_file:
-      - ../proxy.env
-      - ../dsh.env
+      - ../dsh-proxy.env

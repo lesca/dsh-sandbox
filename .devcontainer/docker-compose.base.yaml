@@ -14,9 +14,8 @@ services:
       # - ../projects/dsh-docker-proxy:/opt/dsh-docker-proxy
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # env_file:
-    #   - proxy.env
-    #   - dsh.env
+    env_file:
+      - dsh-default.env
     environment:
       - TZ=Asia/Shanghai
       - DEEPSEEK_API_KEY
