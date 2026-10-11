@@ -25,9 +25,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   ripgrep \
   tmux \
   zsh \
-  # Build tools
+  # Dev tools
   build-essential \
-  # Utilities
   python3 \
   python3-pip \
   python3-venv \
@@ -47,6 +46,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   # system
   locales \
   fonts-noto-cjk \
+  # Media tools
+  ffmpeg \
   && locale-gen en_US.UTF-8 \
   && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
@@ -72,6 +73,12 @@ ENV PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH:$PATH"
 RUN mkdir -p $HOME/.npm-global && \
   npm config set prefix "$HOME/.npm-global" && \
   npm install -g @deepseek-ai/dsh
+
+# Install headless browser
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
+RUN sudo mkdir -p /opt/ms-playwright \
+  && sudo chown -R ${USERNAME}:${USERNAME} /opt/ms-playwright \
+  && npx --yes playwright install --with-deps chromium
 
 # COPY files
 COPY --chown=${USERNAME}:${USERNAME} entrypoint.sh /usr/local/bin/entrypoint.sh

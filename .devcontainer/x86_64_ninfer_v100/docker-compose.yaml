@@ -23,11 +23,12 @@ services:
     stop_signal: SIGINT
     environment:
       - TZ=Asia/Shanghai
-      # - MODEL=/models/ninfer/qwen3_8_27b_nvfp4.ninfer
-      - MODEL=/models/ninfer/qwen3_8_27b_merkyor_coder390_nvfp4.ninfer
-      # - MAX_CONCURRENCY=2
-      - NINFER_ARGS=--no-thinking
-      # - NINFER_ARGS=--default-reasoning-effort xhigh
+      # - MODEL=/models/ninfer/qwen3_8_27b_nvfp4.ninfer # general
+      - MODEL=/models/ninfer/qwen3_8_27b_merkyor_coder390_w4a4_nvfp4.ninfer # ninfer-v100-sm70
+      - MAX_CONCURRENCY=2
+      - MAX_CONTEXT=200000
+      # - NINFER_ARGS=--no-thinking
+      - NINFER_ARGS=--no-thinking --lookup-policy adaptive --lookup-min-suffix 4 # ninfer-v100-sm70
     volumes:
       - /share/public/models:/models:ro
     # command: /usr/sbin/sshd -D
