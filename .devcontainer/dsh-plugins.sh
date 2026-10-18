@@ -22,7 +22,7 @@ dsh plugin --profile web add @tt-a1i/archify-dsh
 # anysearch (incompatible with dsh 0.2.0-rc.2 )
 # https://github.com/anysearch-team/anysearch-dsh
 # dsh plugin --profile web allow-version @anysearch/anysearch-dsh@$(npm view @anysearch/anysearch-dsh version) --dsh-version $(dsh --version) --accept-risk
-# npx -y @deepseek-ai/dsh plugin --profile web add @anysearch/anysearch-dsh
+dsh plugin --profile web add @anysearch/anysearch-dsh
 
 # dsh-notify
 # https://github.com/idoall/dsh-notify
@@ -30,7 +30,7 @@ dsh plugin --profile web add @tt-a1i/archify-dsh
 
 # dsh-xiaomi-tts (with notify features)
 # https://github.com/ppy-web/dsh-plugin-xiaomi-mimo-tts
-dsh plugin --profile web add dsh-xiaomi-tts@latest
+dsh plugin --profile web add dsh-xiaomi-tts
 
 # install bsk (52800)
 # https://github.com/Tencent/BrowserSkill
@@ -41,3 +41,11 @@ dsh plugin --profile web add @wxg-prc-cpg/browser-skill-dsh-plugin
 # dsh-thinking-levels
 # https://github.com/drscrewdriver/dsh-thinking-levels
 dsh plugin --profile web add github:drscrewdriver/dsh-thinking-levels
+
+# dsh-billion-context
+# https://github.com/ranxianglei/billion-context
+dsh plugin --profile web add billion-context
+
+# dsh-context
+# https://github.com/bowenliang123/dsh-context
+dsh plugin --profile web add dsh-context

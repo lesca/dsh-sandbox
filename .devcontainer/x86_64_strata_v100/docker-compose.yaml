@@ -24,7 +24,7 @@ services:
     environment:
       - TZ=Asia/Shanghai
       - HF_ENDPOINT=https://hf-mirror.com
-      - FAMILY=swift
+      # - FAMILY=swift
       # - FAMILY=qwen
       # - MODEL=IQ2_XS
       - MODEL=IQ3_S

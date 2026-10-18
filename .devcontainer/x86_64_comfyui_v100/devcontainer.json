@@ -1,0 +1,39 @@
+{
+  "name": "DSH Sandbox - x86_64_comfyui_v100",
+  "dockerComposeFile": [
+    "docker-compose.yaml"
+  ],
+  "service": "dsh-sandbox",
+  "shutdownAction": "stopCompose",
+  "init": true,
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // "anthropic.claude-code"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "zsh",
+        "terminal.integrated.profiles.linux": {
+          "bash": {
+            "path": "bash",
+            "icon": "terminal-bash"
+          },
+          "zsh": {
+            "path": "zsh"
+          }
+        },
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.trimFinalNewlines": true
+      }
+    }
+  },
+  "remoteUser": "ubuntu",
+  "remoteEnv": {
+    "CLAUDE_CODE_OAUTH_TOKEN": "${localEnv:CLAUDE_CODE_OAUTH_TOKEN:}",
+    "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY:}"
+  },
+  // "initializeCommand": "mkdir -p ${localWorkspaceFolder}/.dsh",
+  "workspaceFolder": "/workspace"
+}

@@ -7,6 +7,7 @@ NC='\033[0m' # No Color (Resets formatting)
 
 stop() {
   echo -e "${GREEN}Stop containers${NC}"
+  docker-compose -f .devcontainer/x86_64_comfyui_v100/docker-compose.yaml down
   docker-compose -f .devcontainer/x86_64_strata_v100/docker-compose.yaml down
   docker-compose -f .devcontainer/x86_64_ninfer_v100/docker-compose.yaml down
   docker-compose -f .devcontainer/x86_64_cuda/docker-compose.yaml down
@@ -16,6 +17,7 @@ stop() {
 
 start() {
   case $1 in 
+    comfy*) ARCH=x86_64_comfyui_v100 ;;
     strata*) ARCH=x86_64_strata_v100 ;;
     ninfer*) ARCH=x86_64_ninfer_v100 ;;
     cuda*) ARCH=x86_64_cuda ;;
@@ -30,14 +32,11 @@ start() {
 if [ -z "$1" ]; then
   stop
   start
-elif [[ "$1" == "stop" || "$1" == "down" ]]; then
-  shift
-  stop "$@"
-elif [[ "$1" == "watch" || "$1" == "w" ]]; then
-  shift
-  stop "$@"
-  start "$@"
+elif [[ "$1" == "stop" || "$1" == "down" || "$1" == "0" ]]; then
+  stop
+elif [[ "$2" == "stop" || "$2" == "down" || "$2" == "0" ]]; then
+  stop
 else
-  stop "$@"
+  stop
   start "$@"
 fi
