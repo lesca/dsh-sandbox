@@ -1,5 +1,4 @@
-ARG BASE_IMAGE=ubuntu:24.04
-FROM ${BASE_IMAGE}
+FROM --platform=$BUILDPLATFORM ubuntu:24.04
 
 # 定义用户名变量，默认值为 node
 ARG USERNAME=ubuntu
@@ -11,7 +10,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Install additional system packages (base image already includes git, curl, sudo, etc.)
 COPY sudoer_default /etc/sudoers.d/sudoer_default
-COPY ${SOURCE_FILE} /etc/apt/sources.list.d/ubuntu.sources
+COPY ${SOURCE_FILE:-ubuntu.sources} /etc/apt/sources.list.d/ubuntu.sources
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get -o Acquire::https::Verify-Peer=false update \
   && apt -o Acquire::https::Verify-Peer=false install -y ca-certificates \

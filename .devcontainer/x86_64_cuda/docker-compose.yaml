@@ -1,15 +1,25 @@
 services:
   dsh-sandbox:
     extends:
-      file: ../docker-compose.base.yaml
+      file: ../x86_64/docker-compose.yaml
       service: dsh-sandbox
-    build:
-      args:
-        - BASE_IMAGE=nvidia/cuda:12.8.1-cudnn-devel-ubuntu24.04
-        - SOURCE_FILE=ubuntu.sources
-        - HTTPS_PROXY=http://172.17.0.1:7070
+
+  cuda:
+    container_name: cuda-dev
+    # image: nvidia/cuda:12.8.1-devel-ubuntu24.04
+    # image: nvidia/cuda:12.8.1-runtime-ubuntu24.04
+    image: nvidia/cuda:12.9.2-cudnn-devel-ubuntu24.04
+    # image: nvidia/cuda:12.9.2-runtime-ubuntu24.04
+
+    stop_signal: SIGINT
+    environment:
+      - TZ=Asia/Shanghai
+    volumes:
+      - /share/public/models:/models:ro
     env_file:
       - ../dsh-proxy.env
+    # command: /usr/sbin/sshd -D
+    command: sleep infinity
     # 启用特权模式或 GPU 支持（如果你的 Dockerfile 需要 NVIDIA CUDA 支持）
     deploy:
       resources:

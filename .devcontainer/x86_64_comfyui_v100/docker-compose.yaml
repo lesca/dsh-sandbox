@@ -1,21 +1,13 @@
 services:
   dsh-sandbox:
     extends:
-      file: ../docker-compose.base.yaml
+      file: ../x86_64/docker-compose.yaml
       service: dsh-sandbox
-    build:
-      args:
-        - BASE_IMAGE=ubuntu:24.04
-        - SOURCE_FILE=ubuntu.sources
-        - HTTPS_PROXY=http://172.17.0.1:7070
-    volumes:
-      - /share/public/models:/models
-    environment:
-      - HF_HOME=/models/huggingface
-      - MODELSCOPE_CACHE=/models/modelscope
-      - MS_CACHE_HOME=/models/modelscope
-    env_file:
-      - ../dsh-proxy.env
+
+  ninfer-v100:
+    extends:
+      file: ../x86_64_ninfer_v100/docker-compose.yaml
+      service: ninfer-v100
 
   comfyui-v100:
     container_name: comfyui-v100
@@ -46,30 +38,3 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-
-  # ninfer-v100:
-  #   container_name: ninfer-v100
-  #   image: lesca/ninfer-v100-sm70:latest
-  #   stop_signal: SIGINT
-  #   environment:
-  #     - TZ=Asia/Shanghai
-  #     # - MODEL=/models/ninfer/qwen3_8_27b_nvfp4.ninfer # general
-  #     - MODEL=/models/ninfer/qwen3_8_27b_merkyor_coder390_w4a4_nvfp4.ninfer # ninfer-v100-sm70
-  #     - MAX_CONCURRENCY=1
-  #     - MAX_CONTEXT=200000
-  #     # - NINFER_ARGS=--no-thinking
-  #     - NINFER_ARGS=--no-thinking --lookup-policy adaptive --lookup-min-suffix 4 # ninfer-v100-sm70
-  #   volumes:
-  #     - /share/public/models:/models:ro
-  #   # command: /usr/sbin/sshd -D
-  #   ports:
-  #     - "18080:18080"
-  #   # command: sleep infinity
-  #   # 启用特权模式或 GPU 支持（如果你的 Dockerfile 需要 NVIDIA CUDA 支持）
-  #   deploy:
-  #     resources:
-  #       reservations:
-  #         devices:
-  #           - driver: nvidia
-  #             count: all
-  #             capabilities: [gpu]
